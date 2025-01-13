@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="3D Semantic Instance Segmentation with Open-Vocabulary queries">
+  <meta name="keywords" content="OpenMask3D, Instance Segmentation, 3D Scene Understanding">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenMask3D 🛋</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/favicon.svg">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Search3D 🔎: <br />
+            <p class="title is-3 publication-title">Hierarchical Open-Vocabulary 3D Segmentation</p>
+          </h1>          
+
+          <h1 class="title is-4" style="color: #5c5c5c;">Accepted at IEEE Robotics and Automation Letters (RA-L)</h1>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://aycatakmaz.github.io/">Ayca Takmaz</a><sup>1,2*
+              </sup>,</span>
+            <span class="author-block">
+              <a href="https://alexdelitzas.github.io/">Alexandros Delitzas</a><sup>1</sup>,</span>
+              <span class="author-block">
+                <a href="https://studios.disneyresearch.com/people/bob-sumner/">Robert W. Sumner</a><sup>1</sup>,
+              </span>           
+              <br />
+
+            <span class="author-block">
+              <a href="https://francisengelmann.github.io/">Francis Engelmann</a><sup>1,2</sup>
+            </span>
+            <span class="author-block">
+              <a href="https://scholar.google.de/citations?user=dfjN3YAAAAAJ&hl=en">Johanna Wald</a><sup>2</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://federicotombari.github.io/">Federico Tombari</a><sup>2</sup>,
+            </span>
+            
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block" style="margin-right: 1em;"><sup>1</sup>ETH Zürich</span>
+            <span class="author-block" style="margin-right: 1em;"><sup>2</sup>Google</span>
+            <span class="author-block" style="margin-right: 1em;"><sup>*</sup>Work done as an intern at Google Zurich</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="static/pdf/search3d.pdf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2409.18431"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark"
+                   style="background-color:#5c5c5c">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code (soon)</span>
+                  </a>
+              </span>
+
+              <span class="link-block">
+                <a href="#"
+                   class="external-link button is-normal is-rounded is-dark"
+                   style="background-color:#5c5c5c">
+                  <span class="icon">
+                      <i class="fas fa-database"></i>
+                  </span>
+                  <span>Data (soon)</span>
+                  </a>
+              </span>
+    
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <h2 class="subtitle has-text-centered">
+        <strong>Search3D</strong> is a an approach that builds a hierarchical open-vocabulary 3D scene representation, enabling the search for entities at varying levels of granularity: fine-grained object parts, entire objects, or regions described by attributes like materials.
+  
+      </h2>
+      <div style="display: flex; justify-content: center;">
+      
+        <img src="static/images/teaser.jpg" style="width: 75%;" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Open-vocabulary 3D segmentation enables the exploration of 3D spaces using free-form text descriptions. Existing methods for open-vocabulary 3D instance segmentation primarily focus on identifying object-level instances in a scene. However, they face challenges when it comes to understanding more fine-grained scene entities such as object parts, or regions described by generic attributes. In this work, we introduce Search3D, an approach that builds a hierarchical open-vocabulary 3D scene representation, enabling the search for entities at varying levels of granularity: fine-grained object parts, entire objects, or regions described by attributes like materials. Our method aims to expand the capabilities of open-vocabulary instance-level 3D segmentation by shifting towards a more flexible open-vocabulary 3D search setting less anchored to explicit object-centric queries, compared to prior work. To ensure a systematic evaluation, we also contribute a scene-scale open-vocabulary 3D part segmentation benchmark based on MultiScan, along with a set of open-vocabulary fine-grained part annotations on ScanNet++. We verify the effectiveness of Search3D across several tasks, demonstrating that our approach outperforms baselines in scene-scale open-vocabulary 3D part segmentation, while maintaining strong performance in segmenting 3D objects and materials.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+
+    <!-- Method Overview. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Method Overview</h2>
+        <div class="content has-text-justified">
+          <p>
+            Our method leverages a hierarchical representation of 3D scenes, which allows for flexible open-vocabulary querying at different levels of granularity.
+        
+
+            <div style="display: flex; justify-content: center;">
+              <img src="static/images/method-overview.jpg" style="width: 100%;" alt="Method Overview Teaser">
+            </div>
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Method Overview. -->
+
+
+<h2 class="title is-3">BibTeX</h2>
+<pre><code>
+@article{takmaz2025search3d,
+  title={{Search3D: Hierarchical Open-Vocabulary 3D Segmentation}},
+  author={Takmaz, Ayca and Delitzas, Alexandros and Sumner, Robert W. and Engelmann, Francis and Wald, Johanna and Tombari, Federico},
+  journal={IEEE Robotics and Automation Letters (RA-L)},
+  year={2025}
+}</code></pre>
+
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is licensed under a <a rel="license"
+              href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+              Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+          <p>
+            It borrows the source code of <a href="https://github.com/nerfies/nerfies.github.io">this website</a>.
+            We would like to thank Utkarsh Sinha and Keunhong Park.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
+
+
