@@ -1,20 +1,24 @@
 # Search3D Data Release: An Adaptation of MultiScan for Hierarchical Open-Vocabulary 3D Segmentation
 
-This release provides an adapted version of the original MultiScan dataset to support open-vocabulary 3D part segmentation evaluation, as introduced in our RA-L 2025 paper *Search3D: Hierarchical Open-Vocabulary 3D Segmentation*. The original MultiScan dataset was designed with fine-grained part annotations for articulated part segmentation. However, to evaluate open-vocabulary segmentation across different granularity levels and capture the scene-object-part hierarchy, we reanalyzed the dataset and formed three distinct groups based on existing annotations:
+This release provides an adapted version of the original MultiScan dataset to support open-vocabulary 3D part segmentation evaluation, as introduced in our RA-L 2025 paper *Search3D: Hierarchical Open-Vocabulary 3D Segmentation*. 
+
+
+> **Download:**  
+> You can download the adapted version of the MultiScan evaluation dataset from [here](https://drive.google.com/drive/folders/1pyTHX3Ym8-StdWDvCVv72C6N_8GsjvSx?usp=sharing). Next, please unpack the data following the structure described in the following section. 
+
+
+The original MultiScan dataset was designed with fine-grained part annotations for articulated part segmentation. However, to evaluate open-vocabulary segmentation across different granularity levels and capture the scene-object-part hierarchy, we reanalyzed the dataset and formed three distinct groups based on existing annotations:
 
 - **Object Annotations:** For scene-scale object instance segmentation.  
 - **Part Annotations:** For part segmentation with only part names (e.g., "drawer", "door")—lacking object context.  
 - **Open-Vocabulary Part (OV-Part) Annotations:** For OV part annotations, we use joint object-part name tuples that includes both object and part labels (e.g., "desk drawer", "cabinet door"). **This is the primary benchmark data for our work.**
-
-> **Download:**  
-> You can download the adapted version of the MultiScan evaluation dataset from [here](https://drive.google.com/drive/folders/1pyTHX3Ym8-StdWDvCVv72C6N_8GsjvSx?usp=sharing). Next, please unpack the data following the structure described in the following section. 
 
 ---
 
 ## Dataset Structure
 
 The dataset is organized into the following folders:
-
+```
   multiscan_evaluation_data_search3d/
     ├──multiscan_annotations_search3d/ # all annotations per-point for each scene. 
     │    ├── obj_annotations
@@ -31,6 +35,7 @@ The dataset is organized into the following folders:
     │    ├── scene_000XX_XX.ply
     │    └── ... (other scene files)
     └──multiscan_search3d_constants.py # file with text descriptions for each semantic label, for object, part and OV-part segmentation.
+  ```
 
 
 ### Details for the annotation folder **`multiscan_annotations_search3d`**
