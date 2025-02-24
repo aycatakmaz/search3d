@@ -1,4 +1,6 @@
 *.out
+multiscan_evaluation_data_search3d
+scannetpp_evaluation_data_search3d
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
