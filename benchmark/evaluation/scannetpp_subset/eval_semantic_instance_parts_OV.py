@@ -410,9 +410,7 @@ def evaluate(preds: dict, gt_path: str, output_file: str, dataset: str = "multis
     ap_scores = evaluate_matches(matches)
     avgs = compute_averages(ap_scores)
 
-    # print
     print_results(avgs)
-    # write_result_file(avgs, output_file)
     return avgs
 
 
