@@ -6,14 +6,7 @@ try:
 except:
     print("Failed to import numpy package.")
     sys.exit(-1)
-
-try:
-    from plyfile import PlyData, PlyElement
-except:
-    print("Please install the module 'plyfile' for PLY i/o, e.g.")
-    print("pip install plyfile")
-    sys.exit(-1)
-
+    
 import util
 
 
@@ -39,18 +32,6 @@ def load_ids(filename):
     ids = open(filename).read().splitlines()
     ids = np.array(ids, dtype=np.int64)
     return ids
-
-
-def read_mesh_vertices(filename):
-    assert os.path.isfile(filename)
-    with open(filename, 'rb') as f:
-        plydata = PlyData.read(f)
-        num_verts = plydata['vertex'].count
-        vertices = np.zeros(shape=[num_verts, 3], dtype=np.float32)
-        vertices[:,0] = plydata['vertex'].data['x']
-        vertices[:,1] = plydata['vertex'].data['y']
-        vertices[:,2] = plydata['vertex'].data['z']
-    return vertices
 
 
 # export 3d instance labels for instance evaluation

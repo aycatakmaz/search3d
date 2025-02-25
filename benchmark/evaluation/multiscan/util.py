@@ -5,12 +5,6 @@ try:
 except:
     print("Failed to import numpy package.")
     sys.exit(-1)
-try:
-    import imageio
-except:
-    print("Please install the module 'imageio' for image processing, e.g.")
-    print("pip install imageio")
-    sys.exit(-1)
 
 # print an error message and quit
 def print_error(message, user_fault=False):
@@ -53,29 +47,6 @@ def read_scene_types_mapping(filename, remove_spaces=True):
     else:
         mapping = { x[1]:int(x[0]) for x in lines }
     return mapping
-
-
-# color by label
-def visualize_label_image(filename, image):
-    height = image.shape[0]
-    width = image.shape[1]
-    vis_image = np.zeros([height, width, 3], dtype=np.uint8)
-    color_palette = create_color_palette()
-    for idx, color in enumerate(color_palette):
-        vis_image[image==idx] = color
-    imageio.imwrite(filename, vis_image)
-
-
-# color by different instances (mod length of color palette)
-def visualize_instance_image(filename, image):
-    height = image.shape[0]
-    width = image.shape[1]
-    vis_image = np.zeros([height, width, 3], dtype=np.uint8)
-    color_palette = create_color_palette()
-    instances = np.unique(image)
-    for idx, inst in enumerate(instances):
-        vis_image[image==inst] = color_palette[inst%len(color_palette)]
-    imageio.imwrite(filename, vis_image)
 
 
 # color palette for nyu40 labels
