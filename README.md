@@ -33,6 +33,13 @@
 <br>
 
 
+---
+### Environment setup and installation
+```bash
+conda create -n search3d python=3.10
+conda activate search3d
+pip install -e .  # install current repository in editable mode
+```
 
 ---
 ## Citation :pray:
