@@ -1,7 +1,6 @@
 import os
 import numpy as np
-#from benchmark.evaluation.scannetpp_subset.eval_semantic_instance_parts_OV import evaluate
-from eval_semantic_instance_parts_OV import evaluate
+from search3d.benchmark.evaluation.scannetpp_subset.eval_semantic_instance_parts_OV import evaluate
 import tqdm
 import json
 import pdb
@@ -47,5 +46,5 @@ if __name__ == '__main__':
     test_pipeline_scannetpp_subset(pred_dir = "/Users/aycatakmaz/search3d/gt_dir_test", #"PATH/TO/PREDICTIONS",
                                     gt_dir = "/Users/aycatakmaz/search3d/scannetpp_evaluation_data_search3d/scannetpp_annotations_search3d/ov_part_annotations", #"PATH/TO/GT/ANNOTATIONS/scannetpp_annotations_search3d/ov_part_annotations",
                                     dataset_type="scannetpp_search3d_ov_parts", 
-                                    query_dict_path = "/Users/aycatakmaz/search3d/benchmark/evaluation/scannetpp_subset/data/ov_part_query_dict.json",
-                                    test_scenes_list="/Users/aycatakmaz/search3d/benchmark/evaluation/scannetpp_subset/data/test_scenes_scannetpp_subset.txt")
+                                    query_dict_path = "/Users/aycatakmaz/search3d/search3d/benchmark/evaluation/scannetpp_subset/data/ov_part_query_dict.json",
+                                    test_scenes_list="/Users/aycatakmaz/search3d/search3d/benchmark/evaluation/scannetpp_subset/data/test_scenes_scannetpp_subset.txt")

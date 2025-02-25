@@ -1,21 +1,28 @@
-import os
-import sys
-from tqdm import tqdm
+import math
+import os, sys, argparse
+import inspect
 from copy import deepcopy
 from uuid import uuid4
 
 import torch
-import numpy as np
+
+try:
+    import numpy as np
+except:
+    print("Failed to import numpy package.")
+    sys.exit(-1)
+
+from scipy import stats
 
 import util
 import util_3d
 
-from benchmark.evaluation.multiscan.data.multiscan_search3d_constants import VALID_JOINT_TUPLE_NAMES, VALID_JOINT_SEMANTIC_IDS
+from search3d.benchmark.evaluation.multiscan.data.multiscan_search3d_constants import CLASS_LABELS_PARTS, VALID_CLASS_IDS_PARTS
 
 # ---------- Label info ---------- #
-DATASET_NAME = "multiscan_search3d_ov_parts" # this is the default value, it is overridden if it is another dataset.
-CLASS_LABELS = list([' '.join(el) for el in VALID_JOINT_TUPLE_NAMES])
-VALID_CLASS_IDS = np.array(VALID_JOINT_SEMANTIC_IDS)
+DATASET_NAME = "multiscan_search3d_parts" # this is the default value, it is overridden if it is another dataset.
+CLASS_LABELS = list(CLASS_LABELS_PARTS)
+VALID_CLASS_IDS = np.array(VALID_CLASS_IDS_PARTS)
 
 ID_TO_LABEL = {}
 LABEL_TO_ID = {}
@@ -88,9 +95,6 @@ def evaluate_matches(matches):
 
                     # collect matches
                     for (gti, gt) in enumerate(gt_instances):
-                        ## openmask3d
-                        # gt_category_names[m].add(ID_TO_LABEL[gt['label_id']])
-                        ##
                         found_match = False
                         num_pred = len(gt["matched_pred"])
                         for pred in gt["matched_pred"]:
@@ -219,7 +223,6 @@ def evaluate_matches(matches):
                     # integrate is now simply a dot product
                     ap_current = np.dot(precision, stepWidths)
 
-
                 elif has_gt:
                     ap_current = 0.0
 
@@ -237,13 +240,14 @@ def compute_averages(aps):
     o25 = np.where(np.isclose(opt["overlaps"], 0.25))
     oAllBut25 = np.where(np.logical_not(np.isclose(opt["overlaps"], 0.25)))
     avg_dict = {}
+    # avg_dict['all_ap']     = np.nanmean(aps[ d_inf,:,:  ])
     avg_dict["all_ap"] = np.nanmean(aps[d_inf, :, oAllBut25])
     avg_dict["all_ap_50%"] = np.nanmean(aps[d_inf, :, o50])
     avg_dict["all_ap_25%"] = np.nanmean(aps[d_inf, :, o25])
     avg_dict["classes"] = {}
     for (li, label_name) in enumerate(CLASS_LABELS):
-
         avg_dict["classes"][label_name] = {}
+        # avg_dict["classes"][label_name]["ap"]       = np.average(aps[ d_inf,li,  :])
         avg_dict["classes"][label_name]["ap"] = np.average(
             aps[d_inf, li, oAllBut25]
         )
@@ -257,6 +261,7 @@ def compute_averages(aps):
 
 
 def make_pred_info(pred: dict):
+    # pred = {'pred_scores' = 100, 'pred_classes' = 100 'pred_masks' = Nx100}
     pred_info = {}
     assert (
         pred["pred_classes"].shape[0]
@@ -343,7 +348,6 @@ def assign_instances_for_scan(pred: dict, gt_file: str):
 
 def print_results(avgs):
     global DATASET_NAME
-    ##
     sep = ""
     col1 = ":"
     lineLen = 64
@@ -411,12 +415,12 @@ def evaluate(
     global LABEL_TO_ID
     global opt
 
-    NUM_CLASSES = len(VALID_CLASS_IDS)
+    # precision & recall
 
     print("evaluating", len(preds), "scans...")
     matches = {}
     for i, (k, v) in enumerate(preds.items()):
-        gt_file = os.path.join(gt_path, k + "_obj_part_inst.txt")
+        gt_file = os.path.join(gt_path, k + "_part_inst.txt")
         if not os.path.isfile(gt_file):
             util.print_error(
                 "Scan {} does not match any gt file".format(k), user_fault=True
@@ -434,7 +438,6 @@ def evaluate(
     ap_scores = evaluate_matches(matches)
     avgs = compute_averages(ap_scores)
 
-    # print
     print_results(avgs)
 
     return avgs

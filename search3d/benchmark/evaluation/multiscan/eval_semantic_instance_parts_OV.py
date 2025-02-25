@@ -1,80 +1,82 @@
-import math
-import os, sys, argparse
-import inspect
+import os
+import sys
+from tqdm import tqdm
 from copy import deepcopy
 from uuid import uuid4
-import pdb
+
 import torch
-from tqdm import tqdm
+import numpy as np
 
-try:
-    import numpy as np
-except:
-    print("Failed to import numpy package.")
-    sys.exit(-1)
+import util
+import util_3d
 
-from scipy import stats
-
-import util as util
-import util_3d as util_3d
-
-from benchmark.evaluation.multiscan.data.multiscan_search3d_constants import CLASS_LABELS, VALID_CLASS_IDS
+from search3d.benchmark.evaluation.multiscan.data.multiscan_search3d_constants import VALID_JOINT_TUPLE_NAMES, VALID_JOINT_SEMANTIC_IDS
 
 # ---------- Label info ---------- #
-DATASET_NAME = "multiscan_search3d_obj"
-CLASS_LABELS = list(CLASS_LABELS)
-VALID_CLASS_IDS = np.asarray(VALID_CLASS_IDS)
+DATASET_NAME = "multiscan_search3d_ov_parts" # this is the default value, it is overridden if it is another dataset.
+CLASS_LABELS = list([' '.join(el) for el in VALID_JOINT_TUPLE_NAMES])
+VALID_CLASS_IDS = np.array(VALID_JOINT_SEMANTIC_IDS)
 
 ID_TO_LABEL = {}
 LABEL_TO_ID = {}
 for i in range(len(VALID_CLASS_IDS)):
     LABEL_TO_ID[CLASS_LABELS[i]] = VALID_CLASS_IDS[i]
     ID_TO_LABEL[VALID_CLASS_IDS[i]] = CLASS_LABELS[i]
-SKIPPED_CLASSES = ["undefined", "floor", "ceiling", "wall", "object"]
-
 # ---------- Evaluation params ---------- #
 # overlaps for evaluation
 opt = {}
-opt['overlaps'] = np.append(np.arange(0.5, 0.95, 0.05), 0.25)
+opt["overlaps"] = np.append(np.arange(0.5, 0.95, 0.05), 0.25)
 # minimum region size for evaluation [verts]
-opt['min_region_sizes'] = np.array([100])  # 100 for scannet
+opt["min_region_sizes"] = np.array([10])  # 100 for s3dis, scannet (check that)
 # distance thresholds [m]
-opt['distance_threshes'] = np.array([float('inf')])
+opt["distance_threshes"] = np.array([float("inf")])
 # distance confidences
-opt['distance_confs'] = np.array([-float('inf')])
+opt["distance_confs"] = np.array([-float("inf")])
 
 
 def evaluate_matches(matches):
-    overlaps = opt['overlaps']
-    min_region_sizes = [opt['min_region_sizes'][0]]
-    dist_threshes = [opt['distance_threshes'][0]]
-    dist_confs = [opt['distance_confs'][0]]
+    overlaps = opt["overlaps"]
+    min_region_sizes = [opt["min_region_sizes"][0]]
+    dist_threshes = [opt["distance_threshes"][0]]
+    dist_confs = [opt["distance_confs"][0]]
 
     # results: class x overlap
-    ap = np.zeros((len(dist_threshes), len(CLASS_LABELS), len(overlaps)), float)
+    ap = np.zeros(
+        (len(dist_threshes), len(CLASS_LABELS), len(overlaps)), float
+    )
+
     for di, (min_region_size, distance_thresh, distance_conf) in enumerate(
-            zip(min_region_sizes, dist_threshes, dist_confs)):
+        zip(min_region_sizes, dist_threshes, dist_confs)
+    ):
         for oi, overlap_th in enumerate(overlaps):
             pred_visited = {}
             for m in matches:
-                for p in matches[m]['pred']:
+                for p in matches[m]["pred"]:
                     for label_name in CLASS_LABELS:
-                        for p in matches[m]['pred'][label_name]:
-                            if 'uuid' in p:
-                                pred_visited[p['uuid']] = False
+                        for p in matches[m]["pred"][label_name]:
+                            if "uuid" in p:
+                                pred_visited[p["uuid"]] = False
+
             for li, label_name in enumerate(CLASS_LABELS):
                 y_true = np.empty(0)
                 y_score = np.empty(0)
                 hard_false_negatives = 0
                 has_gt = False
                 has_pred = False
+
                 for m in matches:
-                    pred_instances = matches[m]['pred'][label_name]
-                    gt_instances = matches[m]['gt'][label_name]
+                    pred_instances = matches[m]["pred"][label_name]
+                    gt_instances = matches[m]["gt"][label_name]
                     # filter groups in ground truth
-                    gt_instances = [gt for gt in gt_instances if
-                                    gt['instance_id'] >= 1000 and gt['vert_count'] >= min_region_size and gt[
-                                        'med_dist'] <= distance_thresh and gt['dist_conf'] >= distance_conf]
+                    gt_instances = [
+                        gt
+                        for gt in gt_instances
+                        if gt["instance_id"] >= 1000
+                        and gt["vert_count"] >= min_region_size
+                        and gt["med_dist"] <= distance_thresh
+                        and gt["dist_conf"] >= distance_conf
+                    ]
+
                     if gt_instances:
                         has_gt = True
                     if pred_instances:
@@ -83,19 +85,23 @@ def evaluate_matches(matches):
                     cur_true = np.ones(len(gt_instances))
                     cur_score = np.ones(len(gt_instances)) * (-float("inf"))
                     cur_match = np.zeros(len(gt_instances), dtype=bool)
+
                     # collect matches
                     for (gti, gt) in enumerate(gt_instances):
+                        ## openmask3d
+                        # gt_category_names[m].add(ID_TO_LABEL[gt['label_id']])
+                        ##
                         found_match = False
-                        num_pred = len(gt['matched_pred'])
-                        for pred in gt['matched_pred']:
+                        num_pred = len(gt["matched_pred"])
+                        for pred in gt["matched_pred"]:
                             # greedy assignments
-                            if pred_visited[pred['uuid']]:
+                            if pred_visited[pred["uuid"]]:
                                 continue
-                            overlap = float(pred['intersection']) / (
-                                        gt['vert_count'] + pred['vert_count'] - pred['intersection'])
-                            # print("overlap", overlap)
+                            overlap = float(pred["intersection"]) / (
+                                gt["vert_count"] + pred["vert_count"] - pred["intersection"]
+                            )
                             if overlap > overlap_th:
-                                confidence = pred['confidence']
+                                confidence = pred["confidence"]
                                 # if already have a prediction for this gt,
                                 # the prediction with the lower score is automatically a false positive
                                 if cur_match[gti]:
@@ -111,9 +117,10 @@ def evaluate_matches(matches):
                                     found_match = True
                                     cur_match[gti] = True
                                     cur_score[gti] = confidence
-                                    pred_visited[pred['uuid']] = True
+                                    pred_visited[pred["uuid"]] = True
                         if not found_match:
                             hard_false_negatives += 1
+
                     # remove non-matched ground truth instances
                     cur_true = cur_true[cur_match == True]
                     cur_score = cur_score[cur_match == True]
@@ -121,23 +128,27 @@ def evaluate_matches(matches):
                     # collect non-matched predictions as false positive
                     for pred in pred_instances:
                         found_gt = False
-                        for gt in pred['matched_gt']:
-                            overlap = float(gt['intersection']) / (
-                                        gt['vert_count'] + pred['vert_count'] - gt['intersection'])
+                        for gt in pred["matched_gt"]:
+                            overlap = float(gt["intersection"]) / (
+                                gt["vert_count"] + pred["vert_count"] - gt["intersection"]
+                            )
                             if overlap > overlap_th:
                                 found_gt = True
                                 break
                         if not found_gt:
-                            num_ignore = pred['void_intersection']
-                            for gt in pred['matched_gt']:
+                            num_ignore = pred["void_intersection"]
+                            for gt in pred["matched_gt"]:
                                 # group?
-                                if gt['instance_id'] < 1000:
-                                    num_ignore += gt['intersection']
+                                if gt["instance_id"] < 1000:
+                                    num_ignore += gt["intersection"]
                                 # small ground truth instances
-                                if gt['vert_count'] < min_region_size or gt['med_dist'] > distance_thresh or gt[
-                                    'dist_conf'] < distance_conf:
-                                    num_ignore += gt['intersection']
-                            proportion_ignore = float(num_ignore) / pred['vert_count']
+                                if (
+                                    gt["vert_count"] < min_region_size
+                                    or gt["med_dist"] > distance_thresh
+                                    or gt["dist_conf"] < distance_conf
+                                ):
+                                    num_ignore += gt["intersection"]
+                            proportion_ignore = float(num_ignore) / pred["vert_count"]
                             # if not ignored append false positive
                             if proportion_ignore <= overlap_th:
                                 cur_true = np.append(cur_true, 0)
@@ -159,7 +170,9 @@ def evaluate_matches(matches):
                     y_true_sorted_cumsum = np.cumsum(y_true_sorted)
 
                     # unique thresholds
-                    (thresholds, unique_indices) = np.unique(y_score_sorted, return_index=True)
+                    (thresholds, unique_indices) = np.unique(
+                        y_score_sorted, return_index=True
+                    )
                     num_prec_recall = len(unique_indices) + 1
 
                     # prepare precision recall
@@ -168,7 +181,11 @@ def evaluate_matches(matches):
                     # all predictions are non-matched but also all of them are ignored and not counted as FP
                     # y_true_sorted_cumsum is empty
                     # num_true_examples = y_true_sorted_cumsum[-1]
-                    num_true_examples = y_true_sorted_cumsum[-1] if len(y_true_sorted_cumsum) > 0 else 0
+                    num_true_examples = (
+                        y_true_sorted_cumsum[-1]
+                        if len(y_true_sorted_cumsum) > 0
+                        else 0
+                    )
                     precision = np.zeros(num_prec_recall)
                     recall = np.zeros(num_prec_recall)
 
@@ -186,57 +203,71 @@ def evaluate_matches(matches):
                         recall[idx_res] = r
 
                     # first point in curve is artificial
-                    precision[-1] = 1.
-                    recall[-1] = 0.
+                    precision[-1] = 1.0
+                    recall[-1] = 0.0
 
                     # compute average of precision-recall curve
                     recall_for_conv = np.copy(recall)
-                    recall_for_conv = np.append(recall_for_conv[0], recall_for_conv)
-                    recall_for_conv = np.append(recall_for_conv, 0.)
+                    recall_for_conv = np.append(
+                        recall_for_conv[0], recall_for_conv
+                    )
+                    recall_for_conv = np.append(recall_for_conv, 0.0)
 
-                    stepWidths = np.convolve(recall_for_conv, [-0.5, 0, 0.5], 'valid')
+                    stepWidths = np.convolve(
+                        recall_for_conv, [-0.5, 0, 0.5], "valid"
+                    )
                     # integrate is now simply a dot product
                     ap_current = np.dot(precision, stepWidths)
 
+
                 elif has_gt:
                     ap_current = 0.0
+
                 else:
-                    ap_current = float('nan')
+                    ap_current = float("nan")
+
                 ap[di, li, oi] = ap_current
+
     return ap
 
 
 def compute_averages(aps):
     d_inf = 0
-    o50 = np.where(np.isclose(opt['overlaps'], 0.5))
-    o25 = np.where(np.isclose(opt['overlaps'], 0.25))
-    oAllBut25 = np.where(np.logical_not(np.isclose(opt['overlaps'], 0.25)))
+    o50 = np.where(np.isclose(opt["overlaps"], 0.5))
+    o25 = np.where(np.isclose(opt["overlaps"], 0.25))
+    oAllBut25 = np.where(np.logical_not(np.isclose(opt["overlaps"], 0.25)))
     avg_dict = {}
-    # avg_dict['all_ap']     = np.nanmean(aps[ d_inf,:,:  ])
-    avg_dict['all_ap'] = np.nanmean(aps[d_inf, :, oAllBut25])
-    avg_dict['all_ap_50%'] = np.nanmean(aps[d_inf, :, o50])
-    avg_dict['all_ap_25%'] = np.nanmean(aps[d_inf, :, o25])
+    avg_dict["all_ap"] = np.nanmean(aps[d_inf, :, oAllBut25])
+    avg_dict["all_ap_50%"] = np.nanmean(aps[d_inf, :, o50])
+    avg_dict["all_ap_25%"] = np.nanmean(aps[d_inf, :, o25])
     avg_dict["classes"] = {}
-        
     for (li, label_name) in enumerate(CLASS_LABELS):
-        avg_dict["classes"][label_name] = {}
-        # avg_dict["classes"][label_name]["ap"]       = np.average(aps[ d_inf,li,  :])
-        avg_dict["classes"][label_name]["ap"] = np.average(aps[d_inf, li, oAllBut25])
-        avg_dict["classes"][label_name]["ap50%"] = np.average(aps[d_inf, li, o50])
-        avg_dict["classes"][label_name]["ap25%"] = np.average(aps[d_inf, li, o25])
 
+        avg_dict["classes"][label_name] = {}
+        avg_dict["classes"][label_name]["ap"] = np.average(
+            aps[d_inf, li, oAllBut25]
+        )
+        avg_dict["classes"][label_name]["ap50%"] = np.average(
+            aps[d_inf, li, o50]
+        )
+        avg_dict["classes"][label_name]["ap25%"] = np.average(
+            aps[d_inf, li, o25]
+        )
     return avg_dict
 
 
 def make_pred_info(pred: dict):
-    # pred = {'pred_scores' = 100, 'pred_classes' = 100 'pred_masks' = Nx100}
     pred_info = {}
-    assert (pred['pred_classes'].shape[0] == pred['pred_scores'].shape[0] == pred['pred_masks'].shape[1])
-    for i in range(len(pred['pred_classes'])):
+    assert (
+        pred["pred_classes"].shape[0]
+        == pred["pred_scores"].shape[0]
+        == pred["pred_masks"].shape[1]
+    )
+    for i in range(len(pred["pred_classes"])):
         info = {}
-        info["label_id"] = pred['pred_classes'][i]
-        info["conf"] = pred['pred_scores'][i]
-        info["mask"] = pred['pred_masks'][:, i]
+        info["label_id"] = pred["pred_classes"][i]
+        info["conf"] = pred["pred_scores"][i]
+        info["mask"] = pred["pred_masks"][:, i]
         pred_info[uuid4()] = info  # we later need to identify these objects
     return pred_info
 
@@ -246,22 +277,17 @@ def assign_instances_for_scan(pred: dict, gt_file: str):
     try:
         gt_ids = util_3d.load_ids(gt_file)
     except Exception as e:
-        util.print_error('unable to load ' + gt_file + ': ' + str(e))
+        util.print_error("unable to load " + gt_file + ": " + str(e))
 
     # get gt instances
-    gt_instances = util_3d.get_instances(gt_ids, VALID_CLASS_IDS, CLASS_LABELS, ID_TO_LABEL)
-    
-    #scene_name = gt_file.split('/')[-1][0:-9]
-    #util_3d.get_instances_for_oracle_replica(gt_ids, VALID_CLASS_IDS, CLASS_LABELS, ID_TO_LABEL, scene_name=scene_name, save_dir='/media/ayca/Elements/ayca/OpenMask3D/oracle_replica_uint8/', dataset_name='replica')
-    #pdb.set_trace()
-
+    gt_instances = util_3d.get_instances(
+        gt_ids, VALID_CLASS_IDS, CLASS_LABELS, ID_TO_LABEL
+    )
     # associate
-    # 
-    # # associate
     gt2pred = deepcopy(gt_instances)
     for label in gt2pred:
         for gt in gt2pred[label]:
-            gt['matched_pred'] = []
+            gt["matched_pred"] = []
     pred2gt = {}
     for label in CLASS_LABELS:
         pred2gt[label] = []
@@ -270,44 +296,45 @@ def assign_instances_for_scan(pred: dict, gt_file: str):
     bool_void = np.logical_not(np.in1d(gt_ids // 1000, VALID_CLASS_IDS))
     # go thru all prediction masks
     for uuid in pred_info:
-        label_id = int(pred_info[uuid]['label_id'])
-        conf = pred_info[uuid]['conf']
+        label_id = int(pred_info[uuid]["label_id"])
+        conf = pred_info[uuid]["conf"]
         if not label_id in ID_TO_LABEL:
             continue
         label_name = ID_TO_LABEL[label_id]
         # read the mask
-        pred_mask = pred_info[uuid]['mask']
-        #print(pred_mask.shape , gt_ids.shape)
-        #print(len(pred_mask) , len(gt_ids))
-        assert (len(pred_mask) == len(gt_ids))
+        pred_mask = pred_info[uuid]["mask"]
+        assert len(pred_mask) == len(gt_ids)
         # convert to binary
         pred_mask = np.not_equal(pred_mask, 0)
         num = np.count_nonzero(pred_mask)
-        if num < opt['min_region_sizes'][0]:
+        if num < opt["min_region_sizes"][0]:
             continue  # skip if empty
 
         pred_instance = {}
-        pred_instance['uuid'] = uuid
-        pred_instance['pred_id'] = num_pred_instances
-        pred_instance['label_id'] = label_id
-        pred_instance['vert_count'] = num
-        pred_instance['confidence'] = conf
-        pred_instance['void_intersection'] = np.count_nonzero(np.logical_and(bool_void, pred_mask))
+        pred_instance["uuid"] = uuid
+        pred_instance["pred_id"] = num_pred_instances
+        pred_instance["label_id"] = label_id
+        pred_instance["vert_count"] = num
+        pred_instance["confidence"] = conf
+        pred_instance["void_intersection"] = np.count_nonzero(
+            np.logical_and(bool_void, pred_mask)
+        )
 
         # matched gt instances
         matched_gt = []
         # go thru all gt instances with matching label
         for (gt_num, gt_inst) in enumerate(gt2pred[label_name]):
-            intersection = np.count_nonzero(np.logical_and(gt_ids == gt_inst['instance_id'], pred_mask))
-            # print("intersection", intersection)
+            intersection = np.count_nonzero(
+                np.logical_and(gt_ids == gt_inst["instance_id"], pred_mask)
+            )
             if intersection > 0:
                 gt_copy = gt_inst.copy()
                 pred_copy = pred_instance.copy()
-                gt_copy['intersection'] = intersection
-                pred_copy['intersection'] = intersection
+                gt_copy["intersection"] = intersection
+                pred_copy["intersection"] = intersection
                 matched_gt.append(gt_copy)
-                gt2pred[label_name][gt_num]['matched_pred'].append(pred_copy)
-        pred_instance['matched_gt'] = matched_gt
+                gt2pred[label_name][gt_num]["matched_pred"].append(pred_copy)
+        pred_instance["matched_gt"] = matched_gt
         num_pred_instances += 1
         pred2gt[label_name].append(pred_instance)
 
@@ -316,6 +343,7 @@ def assign_instances_for_scan(pred: dict, gt_file: str):
 
 def print_results(avgs):
     global DATASET_NAME
+    ##
     sep = ""
     col1 = ":"
     lineLen = 64
@@ -354,20 +382,28 @@ def print_results(avgs):
 
 
 def write_result_file(avgs, filename):
-    _SPLITTER = ','
-    with open(filename, 'w') as f:
-        f.write(_SPLITTER.join(['class', 'class id', 'ap', 'ap50', 'ap25']) + '\n')
+    _SPLITTER = ","
+    with open(filename, "w") as f:
+        f.write(
+            _SPLITTER.join(["class", "class id", "ap", "ap50", "ap25"]) + "\n"
+        )
         for i in range(len(VALID_CLASS_IDS)):
             class_name = CLASS_LABELS[i]
             class_id = VALID_CLASS_IDS[i]
             ap = avgs["classes"][class_name]["ap"]
             ap50 = avgs["classes"][class_name]["ap50%"]
             ap25 = avgs["classes"][class_name]["ap25%"]
-            f.write(_SPLITTER.join([str(x) for x in [class_name, class_id, ap, ap50, ap25]]) + '\n')
+            f.write(
+                _SPLITTER.join(
+                    [str(x) for x in [class_name, class_id, ap, ap50, ap25]]
+                )
+                + "\n"
+            )
 
 
-def evaluate(preds: dict, gt_path: str, output_file: str, dataset: str = "multiscan_search3d_obj"):
-    #pdb.set_trace()
+def evaluate(
+    preds: dict, gt_path: str, output_file: str, dataset: str = "scannet"
+):
     global DATASET_NAME
     global CLASS_LABELS
     global VALID_CLASS_IDS
@@ -375,48 +411,30 @@ def evaluate(preds: dict, gt_path: str, output_file: str, dataset: str = "multis
     global LABEL_TO_ID
     global opt
 
-    total_true = 0
-    total_seen = 0
     NUM_CLASSES = len(VALID_CLASS_IDS)
 
-    true_positive_classes = np.zeros(NUM_CLASSES)
-    positive_classes = np.zeros(NUM_CLASSES)
-    gt_classes = np.zeros(NUM_CLASSES)
-
-    # precision & recall
-    total_gt_ins = np.zeros(NUM_CLASSES)
-    at = 0.5
-    tpsins = [[] for _ in range(NUM_CLASSES)]
-    fpsins = [[] for _ in range(NUM_CLASSES)]
-    # mucov and mwcov
-    all_mean_cov = [[] for _ in range(NUM_CLASSES)]
-    all_mean_weighted_cov = [[] for _ in range(NUM_CLASSES)]
-
-    print('evaluating', len(preds), 'scans...')
+    print("evaluating", len(preds), "scans...")
     matches = {}
     for i, (k, v) in enumerate(preds.items()):
-        if dataset=='multiscan_search3d_obj':
-            gt_file = os.path.join(gt_path, k + "_obj_inst.txt")
-        elif dataset=='multiscan_search3d_part':
-            gt_file = os.path.join(gt_path, k + "_part_inst.txt")
-        else:
-            raise ValueError('Unknown dataset: {}'.format(dataset))
+        gt_file = os.path.join(gt_path, k + "_obj_part_inst.txt")
         if not os.path.isfile(gt_file):
-            util.print_error('Scan {} does not match any gt file'.format(k), user_fault=True)
+            util.print_error(
+                "Scan {} does not match any gt file".format(k), user_fault=True
+            )
 
         matches_key = os.path.abspath(gt_file)
         # assign gt to predictions
         gt2pred, pred2gt = assign_instances_for_scan(v, gt_file)
         matches[matches_key] = {}
-        matches[matches_key]['gt'] = gt2pred
-        matches[matches_key]['pred'] = pred2gt
+        matches[matches_key]["gt"] = gt2pred
+        matches[matches_key]["pred"] = pred2gt
         sys.stdout.write("\rscans processed: {}".format(i + 1))
         sys.stdout.flush()
-    print('')
+    print("")
     ap_scores = evaluate_matches(matches)
     avgs = compute_averages(ap_scores)
 
     # print
     print_results(avgs)
-    return avgs
 
+    return avgs
