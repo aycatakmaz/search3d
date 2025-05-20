@@ -1,11 +1,12 @@
 *.out
 multiscan_evaluation_data_search3d
 scannetpp_evaluation_data_search3d
-
+run_IGNORE*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+gt_dir_test
 
 # C extensions
 *.so

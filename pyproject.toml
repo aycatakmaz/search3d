@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "search3d"
+description = "Search3D: Hierarchical Open-Vocabulary 3D Segmentation"
+authors = [
+    { name = "Anonymous" },
+]
+readme = "README.md"
+dynamic = ["version"]
+
+[tool.setuptools]
+packages = ["search3d"]
+
+[tool.setuptools.dynamic]
+version = {attr = "search3d.__version__"}

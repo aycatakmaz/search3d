@@ -1,0 +1,96 @@
+data:
+  scans_path: 'path/to/multiscan_processed_search3d' # overriding this in the bash script
+  masks:
+    masks_path: ''
+    masks_dir: ''
+    masks_suffix: '_masks_multiscan.pt'
+  segments:
+    segments_path: ''
+    segments_dir: ''
+    segments_suffix: '_segments_multiscan.pt'
+    segments_tree_dict_suffix: '_PART_TREE_DICT.json'
+    segments_tree_dict_pt_suffix: '_PART_TREE_DICT.pt'
+
+  camera:
+    poses_path: 'pose/'
+    poses_ext: '.txt'
+    intrinsic_path: 'intrinsic/0.txt'
+    intrinsic_resolution: [1440, 1920]
+  depths:
+    depths_path: 'depth/'
+    depths_ext: '.png'
+    depth_scale: 1000
+  images:
+    images_path: 'color/'  
+    images_ext: '.png'
+    img_dim: [640, 480]
+    target_shape: [480, 640]
+  point_cloud_path: '../resources/scene_example/scene_0005.ply'
+  point_cloud_suffix: '{}.ply'
+  id_zfill: 0
+  current_img_rotation: 0
+
+search3d:
+  segment_computation:
+    kThresh: 0.05
+    segMinVerts: 100
+    filter_out_small_segments_num_points: 30
+
+  mask_features:
+    top_k: 5
+    multi_level_expansion_ratio: 0.1
+    num_of_levels: 3
+    vis_threshold: 0.2
+    frequency: 5
+    num_random_rounds: 10
+    num_selected_points: 5
+    use_weighted_average: False
+    use_red_circle: False
+    ellipse_scale: 5
+    ellipse_thickness: 3
+    use_closeup_views: False
+  dense_features:
+    img_dim: [640, 480]
+    target_shape: [480, 640]
+    frequency: 5
+    vis_threshold: 0.25
+    cut_num_pixel_boundary: 10 # do not use the features on the image boundary
+    single_level_expansion_ratio: 0.1
+    vlm_model_type: "siglip"
+    seed: 44
+    open_clip:
+      model_name: "ViT-H-14"
+      feat_dim: 1024
+      pretrained_dataset_name: "laion2b_s32b_b79k"
+    mask_generator_2d:
+      model_name: "semantic-sam"
+      model_type: "T"
+      model_ckpt_path: '../resources/swint_only_sam_many2many.pth'
+
+external:
+  sam_checkpoint: '../resources/sam_vit_h_4b8939.pth'
+  sam_model_type: 'vit_h'
+  clip_model: 'ViT-L/14@336px'
+  siglip_variant: 'So400m/14'
+  siglip_res: 224
+  siglip_ckpt: 'webli_en_so400m_224_57633886.npz'
+  siglip_txtvariant: 'So400m'
+  siglip_embdim: 1152
+  siglip_seqlen: 16
+  siglip_vocab: 32_000
+  siglip_tokenizer: 'c4_en'
+  siglip_checkpoint_path: '../resources/webli_en_so400m_224_57633886.npz'
+  siglip_max_batch_size: 32
+  siglip_tokenizer_load_from_file_path: ''
+  
+output:
+  experiment_name: 'experiment'
+  output_directory: 'output/dir' #overriding this in the bash script
+  save_crops: False
+  mask_features_suffix: '_mask_features_multiscan.pt'
+  segment_features_suffix: '_segment_features_multiscan.pt'
+  mask_features_save_dir: 'output/mask_features' #overriding this in the bash script
+  segment_features_save_dir: 'output/segment_features' #overriding this in the bash script
+
+gpu:
+  optimize_gpu_usage: True
